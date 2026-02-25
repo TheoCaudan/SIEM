@@ -1,0 +1,8 @@
+.env
+wazuh/dashboard_certs/*.pem
+data/
+logs/
+wazuh/manager_etc/*
+wzuh/manager_logs/*
+.DS_Store
+*.log

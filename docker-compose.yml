@@ -1,0 +1,116 @@
+services:
+  elasticsearch:
+    image: wazuh/wazuh-indexer:4.9.0
+    container_name: elasticsearch
+    environment:
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - discovery.type=single-node
+      - cluster.name=wazuh-cluster
+      - network.host=0.0.0.0
+      - plugins.security.disabled=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - siem_esdata:/var/lib/wazuh-indexer
+    networks:
+      - orchestration_net
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.9.0
+    container_name: wazuh-manager
+    restart: always
+    ports:
+      - "1514:1514"
+      - "1515:1515"
+      - "55000:55000"
+    environment:
+      - INDEXER_URL=http://elasticsearch:9200
+    volumes:
+      - ./wazuh/manager_etc:/var/ossec/etc
+      - ./wazuh/manager_logs:/var/ossec/logs
+    networks:
+      - orchestration_net
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.9.0
+    container_name: wazuh-dashboard
+    environment:
+      - INDEXER_URL=http://elasticsearch:9200
+      - WAZUH_API_URL=http://wazuh-manager:55000
+      - DASHBOARD_USERNAME=${WAZUH_API_USER}
+      - DASHBOARD_PASSWORD=${WAZUH_ADMIN_PASSWORD}
+      - OPENSEARCH_HOSTS=http://elasticsearch:9200
+      - server.ssl.enabled=true
+      - server.ssl.key=/etc/wazuh-dashboard/certs/dashboard-key.pem
+      - server.ssl.certificate=/etc/wazuh-dashboard/certs/dashboard.pem
+      - server.ssl.certificateAuthorities=[ "/etc/wazuh-dashboard/certs/root-ca.pem" ]
+      - WAZUH_ADMIN_PASSWORD=${WAZUH_ADMIN_PASSWORD}
+    volumes:
+      - ./wazuh/dashboard_certs:/etc/wazuh-dashboard/certs:ro
+      - ./wazuh/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
+    networks:
+      - orchestration_net
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.14.3
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ENTERPRISESEARCH_HOSTS=http://elasticsearch:9200
+      - KIBANA_ENROLLMENT_SETUP_MODE_ENABLED=false
+      - xpack.security.enabled=false
+    networks:
+      - orchestration_net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.14.3
+    container_name: logstash
+    volumes:
+      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml
+    ports:
+      - "5044:5044"
+    depends_on:
+      elasticsearch:
+        condition: service_started
+    networks:
+      - orchestration_net
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.14.3
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/log:/var/log/host:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      - logstash
+    networks:
+      - orchestration_net
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+      - "8080:8080"
+    depends_on:
+      - kibana
+    networks:
+      - orchestration_net
+
+volumes:
+  siem_esdata:
+    driver: local
+
+networks:
+  orchestration_net:
+    external: true
