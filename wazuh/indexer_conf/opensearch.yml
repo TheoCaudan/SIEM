@@ -2,4 +2,12 @@ cluster.name: "wazuh-cluster"
 node.name: "wazuh-indexer"
 network.host: 0.0.0.0
 discovery.type: single-node
-plugins.security.disabled: true
+plugins.security.disabled: false
+plugins.security.ssl.http.enabled: true
+plugins.security.ssl.http.pemcert_filepath: certs/wazuh-indexer.pem
+plugins.security.ssl.http.pemkey_filepath: certs/wazuh-indexer-key.pem
+plugins.security.ssl.http.pemtrustedcas_filepath: certs/root-ca.pem
+plugins.security.ssl.transport.enabled: true
+plugins.security.ssl.transport.pemcert_filepath: certs/wazuh-indexer.pem
+plugins.security.ssl.transport.pemkey_filepath: certs/wazuh-indexer-key.pem
+plugins.security.ssl.transport.pemtrustedcas_filepath: certs/root-ca.pem
