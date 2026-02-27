@@ -9,6 +9,7 @@ Pour le certificat SSL pour le Wazuh-dashboard :
 
 Dans ~/SIEM/wazuh/wazuh-certs:
 ```
+mkdir -p ~/SIEM/wazuh/wazuh-certs
 cd ~/SIEM/wazuh/wazuh-certs
 curl -sO https://packages.wazuh.com/4.9/wazuh-certs-tool.sh
 curl -sO https://packages.wazuh.com/4.9/config.yml
