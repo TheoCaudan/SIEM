@@ -1,7 +1,7 @@
 server.name: wazuh-dashboard
 server.host: "0.0.0.0"
 server.port: 5601
-opensearch.hosts: ["http://elasticsearch:9200"]
+opensearch.hosts: ["https://wazuh-indexer:9200"]
 server.ssl.enabled: true
 server.ssl.key: /etc/wazuh-dashboard/certs/dashboard-key.pem
 server.ssl.certificate: /etc/wazuh-dashboard/certs/dashboard.pem
