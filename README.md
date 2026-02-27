@@ -54,6 +54,10 @@ nano .env
 WAZUH_ADMIN_PASSWORD=P@ssw0rd
 WAZUH_API_USER=admin
 ```
+Generer le hash de votre mot de passe avec la commande suivante : 
+```
+sudo docker exec -it wazuh-indexer /bin/bash -c "JAVA_HOME=/usr/share/wazuh-indexer/jdk /usr/share/wazuh-indexer/plugins/opensearch-security/tools/hash.sh -p 'VotreMotDePasse'"
+```
 
 
 ## Sur la machine distante
