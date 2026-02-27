@@ -3,6 +3,11 @@
 ## Pre-requis:
 
 ## Sur l'hote :
+Memoire :
+```
+sudo sysctl -w vm.max_map_count=262144
+```
+
 Ouvrir le port 1514 en tcp et udp et le port 1515 en tcp pour l'enregistrement auto des nouveaux agents
 
 Pour le certificat SSL pour le Wazuh-dashboard :
@@ -33,6 +38,16 @@ sudo chown -R 1000:1000 ./wazuh/dashboard_certs
 sudo chmod -R 500 ./wazuh/dashboard_certs
 sudo chmod 400 ./wazuh/dashboard_certs/*.pem
 ```
+
+Créer les variables d'environnements :
+```
+nano .env
+
+WAZUH_ADMIN_PASSWORD=P@ssw0rd
+WAZUH_API_USER=admin
+```
+
+
 ## Sur la machine distante
 
 Lors de l'installation de l'agent sur la VM distante il faudra spécifier l'adresse IP de votre hôte :
