@@ -7,7 +7,10 @@ Memoire :
 ```
 sudo sysctl -w vm.max_map_count=262144
 ```
-
+Creation du reseau externe :
+```
+docker network create orchestration_net
+```
 Ouvrir le port 1514 en tcp et udp et le port 1515 en tcp pour l'enregistrement auto des nouveaux agents
 
 Pour le certificat SSL pour le Wazuh-dashboard :
