@@ -41,6 +41,11 @@ sudo chown -R 1000:1000 ./wazuh/dashboard_certs
 sudo chmod -R 500 ./wazuh/dashboard_certs
 sudo chmod 400 ./wazuh/dashboard_certs/*.pem
 ```
+Permissions pour filebeat :
+```
+sudo chown -R root:root ~/SIEM/filebeat
+sudo chmod 600 ~/SIEM/filebeat/filebeat.yml
+```
 
 Créer les variables d'environnements :
 ```
