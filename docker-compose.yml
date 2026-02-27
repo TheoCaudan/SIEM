@@ -34,6 +34,7 @@ services:
     volumes:
       - ./wazuh/manager_etc:/var/ossec/etc
       - ./wazuh/manager_logs:/var/ossec/logs
+      - ./wazuh/manager_conf/ossec.conf:/var/ossec/etc/ossec.conf:ro
     networks:
       - orchestration_net
 
