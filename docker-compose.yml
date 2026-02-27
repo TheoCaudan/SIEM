@@ -91,6 +91,8 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
+    depends_on:
+      - wazuh-dashboard
     networks:
       - orchestration_net
 
