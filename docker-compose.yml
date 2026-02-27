@@ -1,5 +1,5 @@
 services:
-  elasticsearch:
+  wazuh-indexer:
     image: wazuh/wazuh-indexer:4.9.0
     container_name: wazuh-indexer
     environment:
