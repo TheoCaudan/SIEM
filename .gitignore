@@ -4,5 +4,8 @@ data/
 logs/
 wazuh/manager_etc/*
 wazuh/manager_logs/*
+wazuh/wazuh-certs/*
+wazuh/indexer_conf/certs/*
 .DS_Store
 *.log
+*.pem
