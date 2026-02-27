@@ -30,7 +30,7 @@ services:
       - "1515:1515"
       - "55000:55000"
     environment:
-      - INDEXER_URL=http://elasticsearch:9200
+      - INDEXER_URL=https://wazuh-indexer:9200
     volumes:
       - ./wazuh/manager_etc:/var/ossec/etc
       - ./wazuh/manager_logs:/var/ossec/logs
@@ -42,11 +42,11 @@ services:
     image: wazuh/wazuh-dashboard:4.9.0
     container_name: wazuh-dashboard
     environment:
-      - INDEXER_URL=http://elasticsearch:9200
+      - INDEXER_URL=https://wazuh-indexer:9200
       - WAZUH_API_URL=http://wazuh-manager:55000
       - DASHBOARD_USERNAME=${WAZUH_API_USER}
       - DASHBOARD_PASSWORD=${WAZUH_ADMIN_PASSWORD}
-      - OPENSEARCH_HOSTS=http://elasticsearch:9200
+      - OPENSEARCH_HOSTS=https://wazuh-indexer:9200
       - server.ssl.enabled=true
       - server.ssl.key=/etc/wazuh-dashboard/certs/dashboard-key.pem
       - server.ssl.certificate=/etc/wazuh-dashboard/certs/dashboard.pem
