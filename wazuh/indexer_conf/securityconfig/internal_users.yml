@@ -1,0 +1,15 @@
+_meta:
+  type: "internalusers"
+  config_version: 2
+
+admin:
+  hash: "your_hashed_password"
+  reserved: true
+  backend_roles:
+  - "admin"
+  description: "Wazuh admin user"
+
+wazuh-dashboard:
+  hash: "your_hashed_password"
+  reserved: true
+  description: "Dashboard user"
