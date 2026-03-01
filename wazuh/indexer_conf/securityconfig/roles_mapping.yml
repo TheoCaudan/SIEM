@@ -1,0 +1,15 @@
+_meta:
+  type: "rolesmapping"
+  config_version: 2
+
+all_access:
+  reserved: false
+  backend_roles:
+    - "admin"
+  users:
+    - "admin"
+
+  own_index:
+    reserved: false
+    users:
+      - "admin"
