@@ -1,68 +1,85 @@
-# SIEM
+# Wazuh SIEM - Automated Docker Deployment
 
-## Pre-requis:
+A fully automated, production-ready deployment of **Wazuh 4.9.0** (Indexer, Manager, Dashboard) secured by an **Nginx HTTPS Reverse Proxy**. 
 
-## Sur l'hote :
-Memoire :
-```
-sudo sysctl -w vm.max_map_count=262144
-```
-Creation du reseau externe :
-```
-docker network create orchestration_net
-```
-Ouvrir le port 1514 en tcp et udp et le port 1515 en tcp pour l'enregistrement auto des nouveaux agents
-
-Pour le certificat SSL pour le Wazuh-dashboard :
-
-Dans ~/SIEM/wazuh/wazuh-certs:
-```
-mkdir -p ~/SIEM/wazuh/wazuh-certs
-cd ~/SIEM/wazuh/wazuh-certs
-curl -sO https://packages.wazuh.com/4.9/wazuh-certs-tool.sh
-curl -sO https://packages.wazuh.com/4.9/config.yml
-bash wazuh-certs-tool.sh -A
-```
-Créer les dossiers dashboard_certs et certs :
-```
-cd ~/SIEM
-mkdir -p ./wazuh/dashboard_certs
-cp ./wazuh-certificates/wazuh-dashboard.pem ./wazuh/dashboard_certs/dashboard.pem
-cp ./wazuh-certificates/wazuh-dashboard-key.pem ./wazuh/dashboard_certs/dashboard-key.pem
-cp ./wazuh-certificates/root-ca.pem ./wazuh/dashboard_certs/root-ca.pem
-
-mkdir -p ./wazuh/indexer_conf/certs
-cp ./wazuh-certificates/wazuh-indexer* ./wazuh/indexer_conf/certs/
-cp ./wazuh-certificates/root-ca.pem ./wazuh/indexer_conf/certs/
-```
-/!\ - Ajuster les permissions
-```
-sudo chown -R 1000:1000 ./wazuh/dashboard_certs
-sudo chmod -R 500 ./wazuh/dashboard_certs
-sudo chmod 400 ./wazuh/dashboard_certs/*.pem
-```
-Permissions pour filebeat :
-```
-sudo chown -R root:root ~/SIEM/filebeat
-sudo chmod 600 ~/SIEM/filebeat/filebeat.yml
-```
-
-Créer les variables d'environnements :
-```
-nano .env
-
-WAZUH_ADMIN_PASSWORD=P@ssw0rd
-WAZUH_API_USER=admin
-```
-Generer le hash de votre mot de passe avec la commande suivante : 
-```
-sudo docker exec -it wazuh-indexer /bin/bash -c "JAVA_HOME=/usr/share/wazuh-indexer/jdk /usr/share/wazuh-indexer/plugins/opensearch-security/tools/hash.sh -p 'VotreMotDePasse'"
-```
+This project is designed for ease of use, featuring an automated SSL certificate generation and security initialization script.
 
 
-## Sur la machine distante
 
-Lors de l'installation de l'agent sur la VM distante il faudra spécifier l'adresse IP de votre hôte :
+---
+
+## Prerequisites
+
+Before starting, ensure your system meets these requirements:
+* **Docker** & **Docker Compose** installed.
+* **System Resources**: Minimum 4GB RAM (8GB recommended).
+* **OS**: Linux (Ubuntu/Debian preferred) or WSL2.
+
+---
+
+## Quick Start (Automated Setup)
+
+Follow these steps to deploy the entire stack in minutes:
+
+### 1. Clone the repository
+```bash
+git clone [https://github.com/TheoCaudan/SIEM.git](https://github.com/TheoCaudan/SIEM.git)
+cd SIEM
 ```
-WAZUH_MANAGER="IP_VM" apt-get install wazuh-agent
+
+### 2. Configure environment variables
+
+Copy the example environment file and edit it if you wish to change default passwords:
+```bash
+cp .env.example .env
 ```
+
+### 3. Run the Initialization Script
+This script handles the kernel configuration (vm.max_map_count), generates all internal SSL certificates, starts the containers, and initializes the security database.
+```bash
+chmod +x init-stack.sh
+./init-stack.sh
+```
+
+## Accessing the Dashboard
+Once the script displays "DEPLOYMENT COMPLETED SUCCESSFULLY":
+
+`URL: https://localhost`
+
+Username: admin (or your value in .env)
+
+Password: P@ssw0rd (or your value in .env)
+
+Note: Since we use self-signed certificates for the Nginx proxy, your browser will show a security warning. Click "Advanced" and "Proceed to localhost".
+
+## Project Structure
+init-stack.sh: The "brain" of the setup. Automates PKI and security injection.
+
+nginx/: Reverse proxy configuration and SSL certificates.
+
+wazuh/: Contains configurations for Indexer, Manager, and Dashboard.
+
+logstash/ & filebeat/: Data collection pipeline for external logs.
+
+## Troubleshooting
+
+| Issue | Solution |
+| :--- | ---: |
+| 502 Bad Gateway | The Dashboard is still starting. Wait 60 seconds and refresh. |
+| Indexer Crashes | Ensure your host has enough RAM. Check docker logs wazuh-indexer. |
+| 401 Unauthorized | Verify that your INDEXER_PASSWORD_HASH in .env matches your password. |
+
+## Monitoring New Machines (Agents)
+
+To start supervising a new server or workstation:
+
+1.  **Open Wazuh Dashboard**: Go to `Agents` > `Deploy new agent`.
+2.  **Configure**:
+    * **OS**: Select your target OS.
+    * **Manager Address**: Enter the **IP of your SIEM server**.
+    * **Agent Name**: Give it a friendly name (e.g., `Web-Server-01`).
+3.  **Install**: Copy and run the generated command on the target machine.
+4.  **Start Service**: Ensure the `wazuh-agent` service is started.
+
+The machine will appear in the **Security Events** and **Integrity Monitoring** tabs within 2 minutes.
+
