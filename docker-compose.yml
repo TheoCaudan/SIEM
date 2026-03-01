@@ -40,6 +40,9 @@ services:
       - "55000:55000"
     environment:
       - INDEXER_URL=https://wazuh-indexer:9200
+      - WAZUH_REGISTRATION_PASSWORD=${WAZUH_API_PASSWORD}
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
+      - WAZUH_API_PASSWORD=${WAZUH_API_PASSWORD}
     volumes:
       - ./wazuh/manager_etc:/var/ossec/etc
       - ./wazuh/manager_logs:/var/ossec/logs
@@ -56,25 +59,21 @@ services:
       /bin/bash -c "
       export INDEXER_USERNAME=${INDEXER_USERNAME} &&
       export INDEXER_PASSWORD=${INDEXER_PASSWORD} &&
+      export WAZUH_API_USER=${WAZUH_API_USER} &&
+      export WAZUH_API_PASSWORD=${WAZUH_API_PASSWORD} &&
       /usr/share/wazuh-dashboard/bin/opensearch-dashboards --allow-root"
-    ports:
-      - "5601:5601"
+    environment:
+      - WAZUH_API_URL=https://wazuh-manager:55000
+      - WAZUH_API_USER=${WAZUH_API_USER}
+      - WAZUH_API_PASSWORD=${WAZUH_API_PASSWORD}
+      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_USERNAME=${INDEXER_USERNAME}
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
+      - WAZUH_CERTIFICATE_AUTHORITIES=
+      - DASHBOARD_TLS_ENABLED=true
     volumes:
       - ./wazuh/wazuh-certs/wazuh-certificates:/usr/share/wazuh-dashboard/certs:ro
       - ./wazuh/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
-    networks:
-      - orchestration_net
-
-  logstash:
-    image: docker.elastic.co/logstash/logstash:8.14.3
-    container_name: logstash
-    environment:
-      - LS_JAVA_OPTS=-Xms512m -Xmx512m
-    volumes:
-      - ./logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-      - ./logstash/logstash.yml:/usr/share/logstash/config/logstash.yml
-    ports:
-      - "5044:5044"
     networks:
       - orchestration_net
 
@@ -82,11 +81,13 @@ services:
     image: docker.elastic.co/beats/filebeat:8.14.3
     container_name: filebeat
     user: root
+    environment:
+      - INDEXER_URL=https://wazuh-indexer:9200
+      - INDEXER_USERNAME=${INDEXER_USERNAME}
+      - INDEXER_PASSWORD=${INDEXER_PASSWORD}
     volumes:
       - ./filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - /var/var/run/docker.sock:/var/run/docker.sock:ro
-      - /var/log:/var/log/host:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./wazuh/mnger_logs:/var/ossec/logs:ro
     networks:
       - orchestration_net
 
