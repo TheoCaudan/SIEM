@@ -12,6 +12,8 @@ services:
       - plugins.security.ssl.http.pemcert_filepath=certs/wazuh-indexer.pem
       - plugins.security.ssl.http.pemkey_filepath=certs/wazuh-indexer-key.pem
       - plugins.security.ssl.http.pemtrustedcas_filepath=certs/root-ca.pem
+      - plugins.security.nodes_dn=["CN=wazuh-indexer,OU=Wazuh,O=Wazuh,L=California,C=US"]
+      - plugins.security.authcz.admin_dn=["CN=admin,OU=Wazuh,O=Wazuh,L=California,C=US"]
     ulimits:
       memlock:
         soft: -1
@@ -20,9 +22,11 @@ services:
         soft: 65536
         hard: 65536
     volumes:
+      - ./wazuh/indexer_conf/securityconfig:/usr/share/wazuh-indexer/securityconfig:ro
       - siem_esdata:/var/lib/wazuh-indexer
       - ./wazuh/indexer_conf/opensearch.yml:/usr/share/wazuh-indexer/opensearch.yml:ro
       - ./wazuh/indexer_conf/certs:/usr/share/wazuh-indexer/config/certs:ro
+    command: /usr/share/wazuh-indexer/bin/opensearch
     networks:
       - orchestration_net
 
@@ -46,19 +50,17 @@ services:
   wazuh-dashboard:
     image: wazuh/wazuh-dashboard:4.9.0
     container_name: wazuh-dashboard
-    environment:
-      - INDEXER_URL=https://wazuh-indexer:9200
-      - WAZUH_API_URL=http://wazuh-manager:55000
-      - DASHBOARD_USERNAME=${WAZUH_API_USER}
-      - DASHBOARD_PASSWORD=${WAZUH_ADMIN_PASSWORD}
-      - OPENSEARCH_HOSTS=https://wazuh-indexer:9200
-      - server.ssl.enabled=true
-      - server.ssl.key=/etc/wazuh-dashboard/certs/dashboard-key.pem
-      - server.ssl.certificate=/etc/wazuh-dashboard/certs/dashboard.pem
-      - server.ssl.certificateAuthorities=[ "/etc/wazuh-dashboard/certs/root-ca.pem" ]
-      - WAZUH_ADMIN_PASSWORD=${WAZUH_ADMIN_PASSWORD}
+    hostname: wazuh-dashboard
+    user: "0"
+    entrypoint: >
+      /bin/bash -c "
+      export INDEXER_USERNAME=${INDEXER_USERNAME} &&
+      export INDEXER_PASSWORD=${INDEXER_PASSWORD} &&
+      /usr/share/wazuh-dashboard/bin/opensearch-dashboards --allow-root"
+    ports:
+      - "5601:5601"
     volumes:
-      - ./wazuh/dashboard_certs:/etc/wazuh-dashboard/certs:ro
+      - ./wazuh/wazuh-certs/wazuh-certifictes:/usr/share/wazuh-dashboard/certs:ro
       - ./wazuh/opensearch_dashboards.yml:/usr/share/wazuh-dashboard/config/opensearch_dashboards.yml:ro
     networks:
       - orchestration_net
@@ -93,8 +95,10 @@ services:
     container_name: nginx
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - wazuh-dashboard
     networks:
