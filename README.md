@@ -12,7 +12,7 @@ This project is designed for ease of use, featuring an automated SSL certificate
 
 Before starting, ensure your system meets these requirements:
 * **Docker** & **Docker Compose** installed.
-* **System Resources**: Minimum 4GB RAM (8GB recommended).
+* **System Resources**: Minimum 6GB RAM (8GB or more recommended).
 * **OS**: Linux (Ubuntu/Debian preferred) or WSL2.
 
 ---
