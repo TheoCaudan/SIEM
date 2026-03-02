@@ -45,10 +45,16 @@ if [ ! -f "./nginx/certs/nginx-selfsigned.crt" ]; then
 fi
 
 echo -e "${BLUE}==> [5/6] Starting Docker Containers...${NC}"
+
+if [ ! -f "./wazuh/manager_etc/rules/local_rules.xml" ]; then
+    echo -e "${RED}Error: local_rules.xml missing in ./wazuh/manager_etc/rules/${NC}"
+    exit 1
+fi
+
 docker compose up -d
 
-echo -e "${BLUE}==> [6/6] Initializing Indexer Security (securityadmin)...${NC}"
-echo "Waiting for Indexer API to become responsive (this may take a minute)..."
+echo -e "${BLUE}==> [6/6] Initializing Indexer Security and Dashboard Link...${NC}"
+echo "Waiting for Indexer API to become responsive..."
 until curl -k -s https://localhost:9200 > /dev/null; do
     echo -n "."
     sleep 5
@@ -63,11 +69,28 @@ docker exec -it wazuh-indexer /usr/share/wazuh-indexer/plugins/opensearch-securi
   -key /usr/share/wazuh-indexer/config/certs/admin-key.pem \
   -h localhost
 
-echo -e "${BLUE}Finalizing services...${NC}"
-docker compose restart wazuh-dashboard nginx
+echo -e "${BLUE}==> Fixing Wazuh Dashboard API Connection (DNS & Auth)...${NC}"
+
+DASHBOARD_CONF_FILE="/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml"
+
+docker exec -it wazuh-dashboard bash -c "cat <<EOF > $DASHBOARD_CONF_FILE
+hosts:
+  - default:
+      url: https://wazuh-manager
+      port: 55000
+      user: wazuh
+      password: wazuh
+EOF"
+
+docker exec -it wazuh-dashboard chown wazuh-dashboard:wazuh-dashboard $DASHBOARD_CONF_FILE
+
+echo -e "${BLUE}Finalizing services (Restarting for synchronization)...${NC}"
+
+docker restart wazuh-manager
+sleep 10
+docker restart wazuh-dashboard nginx
 
 echo -e "${GREEN}==================================================${NC}"
-echo -e "${GREEN}       DEPLOYMENT COMPLETED SUCCESSFULLY         ${NC}"
-echo -e "${GREEN}   You can now access your SIEM at:              ${NC}"
-echo -e "${GREEN}   https://localhost                             ${NC}"
+echo -e "${GREEN}         DEPLOYMENT COMPLETED SUCCESSFULLY        ${NC}"
+echo -e "${GREEN}   SIEM ready and reachable to https://localhost  ${NC}"
 echo -e "${GREEN}==================================================${NC}"
